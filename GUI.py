@@ -41,14 +41,22 @@ class GIU_GAME:
         
     def pick_image(self, folder):
         base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-        path = os.path.join(base, "assets", folder)
-        if not os.path.isdir(path):
+        path = None
+        for top in os.listdir(base):
+            if top.lower() in ("assets", "asset") and os.path.isdir(os.path.join(base, top)):
+                for sub in os.listdir(os.path.join(base, top)):
+                    if sub.lower() == folder and os.path.isdir(os.path.join(base, top, sub)):
+                        path = os.path.join(base, top, sub)
+        print("Looking for", folder, "images in:", path)
+        if path is None:
             return None
-        files = [f for f in os.listdir(path) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp"))]
+        files = [f for f in os.listdir(path) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".jfif"))]
+        print("Found images:", files)
         if not files:
             return None
-        return pygame.image.load(os.path.join(path, random.choice(files))).convert_alpha()
-
+        chosen = random.choice(files)
+        print("Chose:", chosen)
+        return pygame.image.load(os.path.join(path, chosen)).convert_alpha()
     def is_valid_location(self,board, col):
         return board[self.ROW-1][col] == 0
 
@@ -325,8 +333,8 @@ class GIU_GAME:
         alpha = 0
         expectimax = 0
         player =1 
-        tree_console = 1
-        tree_window = 1
+        tree_console = 0
+        tree_window = 0
         error1 = ""
         error2 = ""
         while not done:
