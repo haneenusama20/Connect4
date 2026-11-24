@@ -1,5 +1,4 @@
 import math
-import random
 from bisect import bisect_left, bisect_right
 
 import pygame
@@ -23,22 +22,7 @@ MAX_NODES = 100000
 MAX_SHOWN = 6000     
 
 
-class Node:
-    def __init__(self, value=None, node_type=None):
-        self.value = value
-        self.children = []
-        self.parent = None
-        self.node_type = node_type   
-        self.ispruned = False       
-        self.probability = []       
-
-    def add_child(self, child, prob=None):
-        self.children.append(child)
-        child.parent = self
-        self.probability.append(prob)
-
-
-def fmt(v):
+def fmt(v): #shaklan, tane
     if v is None:
         return "?"
     if isinstance(v, float):
@@ -125,7 +109,7 @@ class TreeLayout:
             xs = []
             for i in range(len(node.children)):
                 xs.append(self.build(node.children[i], level + 1, idx, i))
-            x = (xs[0] + xs[-1]) / 2     # parent sits in the middle of its children
+            x = (xs[0] + xs[-1]) / 2     # parent fel nos
         self.x[idx] = x
         return x
 
@@ -170,7 +154,27 @@ class TreeLayout:
         return chosen
 
 
-class GIU_TREE:
+
+def fmt(v):
+    if v is None:
+        return "?"
+    if isinstance(v, float):
+        return format(round(v, 3), "g")
+    return str(v)
+
+
+def fmt_bound(v):
+    if v is None:
+        return "?"
+    if v >= 1000000:
+        return "inf"
+    if v <= -1000000:
+        return "-inf"
+    return str(v)
+
+
+class TreeLayout:
+
     def __init__(self, root):
         self.layout = TreeLayout(root)
         self.path = self.layout.chosen_path()
@@ -185,7 +189,7 @@ class GIU_TREE:
         self.cache = {}
         self.title = "Search tree"
 
-    #
+    
     def view_size(self, w, h):
         return (w - SB) / self.zoom, (h - TOP - SB) / self.zoom
 
@@ -537,24 +541,4 @@ class GIU_TREE:
         pygame.display.set_caption(old_caption)
 
 
-def show_tree(root, title="Search tree"):
-    GIU_TREE(root).show(title)
-
-
-def make_big_test_tree(levels=5, branching=7):
-    random.seed(1)
-
-    def build(level):
-        kind = "max" if level % 2 == 0 else "min"
-        node = Node(random.randint(-5, 5), kind)
-        if level < levels:
-            for i in range(branching):
-                child = build(level + 1)
-                if level > 1 and random.random() < 0.15:
-                    child.ispruned = True
-                    child.children = []
-                    child.probability = []
-                node.add_child(child)
-        return node
-    return build(0)
 

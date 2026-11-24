@@ -1,3 +1,5 @@
+import os
+os.environ["SDL_VIDEO_CENTERED"] = "1"
 import sys
 import pygame
 import numpy as np
@@ -12,7 +14,7 @@ RANDOM_DROPS_IN_EXPECTED = True #in case mesh 3yzyn, nghyrha
 
 class GIU_GAME:
     def __init__(self):
-
+        
         self.ROW = 6
         self.COLUMN = 7 
         self.WIN = 4 
@@ -24,6 +26,9 @@ class GIU_GAME:
         self.SQAURESSIZE = 100
         
         pygame.init()
+        info = pygame.display.Info()
+        self.screen_w = info.current_w
+        self.screen_h = info.current_h
         self.screen = pygame.display.set_mode((850, 460))
         self.start()
     def create_board(self):
@@ -88,13 +93,14 @@ class GIU_GAME:
 
         pygame.draw.line(self.screen, self.BLACK, (self.COLUMN*self.SQAURESSIZE +25, self.ROW*self.SQAURESSIZE +self.SQAURESSIZE), (25, self.ROW*self.SQAURESSIZE +self.SQAURESSIZE), 7)
         pygame.draw.rect(self.screen, self.DARKERBLUE, (0, self.ROW*self.SQAURESSIZE +self.SQAURESSIZE, self.width, self.SQAURESSIZE))
-        self.draw_exit_button()   # added
+        self.draw_exit_button()   
+
+
     def exit_button(self):
-        # added: the Exit button sits in the bottom strip, under the board
         return pygame.Rect(self.width - 110, self.ROW*self.SQAURESSIZE + self.SQAURESSIZE + 8, 100, 34)
 
     def draw_exit_button(self):
-        # added
+        
         if not hasattr(self, "exit_font"):
             self.exit_font = pygame.font.SysFont("monospace", 20)
         button = self.exit_button()
@@ -124,7 +130,7 @@ class GIU_GAME:
         pygame.display.get_surface().fill((0,0,0))
         pygame.display.update()
         font = pygame.font.SysFont("monospace", 90)
-        if player == 0:   # added: 0 means a draw
+        if player == 0:  
             message = "Draw!"
         else:
             message = "Player " + str(player) + " wins!"
@@ -153,7 +159,7 @@ class GIU_GAME:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if exitBtn.collidepoint(event.pos):   # added
+                    if exitBtn.collidepoint(event.pos):  
                         pygame.quit()
                         sys.exit()
                     if playagainBtn.collidepoint(event.pos):
@@ -272,7 +278,6 @@ class GIU_GAME:
         circle2 = pygame.Rect(335, 370, 20, 20)
         circle1Text = font.render("RED", 1, self.RED)
         circle2Text = font.render("YELLOW", 1, self.YELLOW)
-        # added: the user chooses how to see the tree (both are on by default)
         treeText = font.render("Show the tree", 1, (255,255,255))
         circletc = pygame.Rect(535, 315, 20, 20)
         circletw = pygame.Rect(535, 370, 20, 20)
@@ -290,13 +295,24 @@ class GIU_GAME:
         player =1 
         tree_console = 1
         tree_window = 1
+        error1 = ""
+        error2 = ""
         while not done:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if donebtn.collidepoint(event.pos):
-                        done = True
+                        error1 = ""
+                        error2 = ""
+                        r = int(textinput1) if textinput1 else self.ROW
+                        c = int(textinput2) if textinput2 else self.COLUMN
+                        if not 6 <= r <= 20:
+                            error1 = "Rows must be between 6 and 20"
+                        if not 7 <= c <= 15:
+                            error2 = "Columns must be between 7 and 15"
+                        if error1 == "" and error2 == "":
+                            done = True
                     active = inputbox1.collidepoint(event.pos)
                     active2 = inputbox2.collidepoint(event.pos)
                     active3 = inputbox3.collidepoint(event.pos)
@@ -364,6 +380,8 @@ class GIU_GAME:
             pygame.draw.rect(screen, color_inactive, donebtn)
             done_text = font.render("Done", True, (255, 255, 255))
             screen.blit(done_text, done_text.get_rect(center=donebtn.center))
+            screen.blit(font.render(error1, True, (255, 80, 80)), (40, 405))
+            screen.blit(font.render(error2, True, (255, 80, 80)), (40, 430))
             pygame.display.update()
 
         self.K = max(1, int(textinput3)) if textinput3 else 3   
@@ -374,13 +392,15 @@ class GIU_GAME:
         if not self.ROW <= row <= 20 or not self.COLUMN <= col <= 15:
             return self.ROW, self.COLUMN, alpha, player, expectimax
         return row, col,alpha,player,expectimax
+    
     def start(self):
-        
-        
         self.ROW = 6
         self.COLUMN = 7
         self.screen = pygame.display.set_mode((850, 460))
         self.ROW, self.COLUMN,self.alpha,self.Hplayer,self.expecti = self.get_data()
+        room_h = min(self.screen_h - 120, 700)
+        room_w = self.screen_w - 40
+        self.SQAURESSIZE = max(20, min(100, (room_h - 50) // (self.ROW + 1), (room_w - 50) // self.COLUMN))
         self.width = self.COLUMN * self.SQAURESSIZE + 50
         self.height = (self.ROW + 1) * self.SQAURESSIZE + 50
         self.screen = pygame.display.set_mode((self.width, self.height))
