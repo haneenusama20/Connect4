@@ -38,7 +38,22 @@ class GIU_GAME:
     def drop_piece(self,board,row ,col,piece):
         board [row][col] = piece
 
+ 
+
+    def immediate_move(self,board):
+        for col in board.valid_columns():
+            b = board.copy()
+            b.drop(col, AGENT)
+            if b.scores[AGENT] > board.scores[AGENT]:
+                return col
         
+        for col in board.valid_columns():
+            b = board.copy()
+            b.drop(col, HUMAN)
+            if b.scores[HUMAN] > board.scores[HUMAN]:
+                return col
+        return None  
+
     def pick_image(self, folder):
         base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
         path = None
@@ -256,21 +271,24 @@ class GIU_GAME:
         human_piece = 3 - ai_piece
         game = self.to_agent_board(board, human_piece)
 
-        if self.expecti:
-            choose = agent.choose_move_expected
-        elif self.alpha:
-            choose = agent.choose_move_alphabeta
-        else:
-            choose = agent.choose_move
-
         pygame.display.set_caption("AI is thinking...")
         agent.set_tree_building(self.tree_console or self.tree_window)
         start_time = time.perf_counter()
-        col = choose(game, self.K)
+
+        col = self.immediate_move(game)
+        if col is None:
+            if self.expecti:
+                choose = agent.choose_move_expected
+            elif self.alpha:
+                choose = agent.choose_move_alphabeta
+            else:
+                choose = agent.choose_move
+            col = choose(game, self.K)
+
         seconds = time.perf_counter() - start_time
         pygame.display.set_caption("Your turn")
 
-        if self.tree_console:                        
+        if self.tree_console and agent.get_tree() is not None:                        
             print_tree(agent.get_tree())
         if self.tree_window and agent.get_tree() is not None:      
             GIU_TREE(agent.get_tree()).show("AI tree")   
