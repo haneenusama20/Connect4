@@ -1,20 +1,26 @@
 name: build exe
-on: [push,workflow_dispatch]
+on: [push, workflow_dispatch]
+
 jobs:
-build:
-runs-on: windows-latest
-steps:
-- uses: actions/checkout@v2
-- uses: actions/setup-python@v5
-  with: python-version: "3.11"
-- name: install
-  run: python -m pip install pyinstaller numpy pygame
-  shell: bash
-- name: Build exe
-  run: pyinstaller --onefile --noconsole --add-data "assets;assets" GUI.py
-  shell: bash
-- name: upload
-  uses: actions/upload-artifact@v3
-  with:
-    name: connect4
-    path: dist/GUI.exe
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: install
+        run: python -m pip install pyinstaller numpy pygame
+        shell: bash
+
+      - name: Build exe
+        run: pyinstaller --onefile --noconsole --add-data "assets;assets" GUI.py
+        shell: bash
+
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: connect4
+          path: dist/GUI.exe
