@@ -154,27 +154,7 @@ class TreeLayout:
         return chosen
 
 
-
-def fmt(v):
-    if v is None:
-        return "?"
-    if isinstance(v, float):
-        return format(round(v, 3), "g")
-    return str(v)
-
-
-def fmt_bound(v):
-    if v is None:
-        return "?"
-    if v >= 1000000:
-        return "inf"
-    if v <= -1000000:
-        return "-inf"
-    return str(v)
-
-
-class TreeLayout:
-
+class GIU_TREE:
     def __init__(self, root):
         self.layout = TreeLayout(root)
         self.path = self.layout.chosen_path()
@@ -539,6 +519,5 @@ class TreeLayout:
         if old_size is not None:
             pygame.display.set_mode(old_size)
         pygame.display.set_caption(old_caption)
-
 
 

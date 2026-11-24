@@ -39,6 +39,15 @@ class GIU_GAME:
         board [row][col] = piece
 
         
+    def pick_image(self, folder):
+        base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+        path = os.path.join(base, "assets", folder)
+        if not os.path.isdir(path):
+            return None
+        files = [f for f in os.listdir(path) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp"))]
+        if not files:
+            return None
+        return pygame.image.load(os.path.join(path, random.choice(files))).convert_alpha()
 
     def is_valid_location(self,board, col):
         return board[self.ROW-1][col] == 0
@@ -126,7 +135,7 @@ class GIU_GAME:
                     sys.exit()
 
 
-    def win_announcment(self,screen, player, subtitle=""):
+    def win_announcment(self,screen, player, subtitle="", image=None):
         pygame.display.get_surface().fill((0,0,0))
         pygame.display.update()
         font = pygame.font.SysFont("monospace", 90)
@@ -150,7 +159,13 @@ class GIU_GAME:
         pygame.draw.rect(screen, (170, 40, 40), exitBtn)
         textex = font2.render("Exit", 1, (255,255,255))
         screen.blit(textex, textex.get_rect(centerx=exitBtn.centerx, centery=exitBtn.centery))
-
+        if image is not None:
+            top = 200
+            max_w = screen.get_width() - 40
+            max_h = screen.get_height()//2 + 90 - top
+            scale = min(max_w / image.get_width(), max_h / image.get_height())
+            image = pygame.transform.smoothscale(image, (int(image.get_width()*scale), int(image.get_height()*scale)))
+            screen.blit(image, image.get_rect(centerx=screen.get_width()/2, y=top))
         pygame.display.update()
         
         while True:
@@ -198,21 +213,36 @@ class GIU_GAME:
         if landing != col:
             print("The disc slipped from column", col, "to column", landing)
         return landing
+    def winning_cells(self, board, piece):
+        for r in range(self.ROW):
+            for c in range(self.COLUMN):
+                for dr, dc in [[0, 1], [1, 0], [1, 1], [1, -1]]:
+                    cells = [(r + i*dr, c + i*dc) for i in range(self.WIN)]
+                    if all(0 <= rr < self.ROW and 0 <= cc < self.COLUMN and board[rr][cc] == piece for rr, cc in cells):
+                        return cells
+        return []
 
-    def end_game(self, board):
-        
-        game = self.to_agent_board(board, 1)    
-        red = game.scores[HUMAN]
-        yellow = game.scores[AGENT]
-        subtitle = "Red: " + str(red) + "   Yellow: " + str(yellow)
-        print("Game over.", subtitle)
-        if red > yellow:
-            self.win_announcment(self.screen, 1, subtitle)
-        elif yellow > red:
-            self.win_announcment(self.screen, 2, subtitle)
+    def highlight_win(self, board, cells):
+        for r, c in cells:
+            x = int(c*self.SQAURESSIZE + self.SQAURESSIZE/2 + 25)
+            y = int((self.ROW - 1 - r)*self.SQAURESSIZE + self.SQAURESSIZE/2 + self.SQAURESSIZE)
+            pygame.draw.circle(self.screen, (255,255,255), (x, y), int(self.SQAURESSIZE/2 - 5), 6)
+        pygame.display.update()
+    def end_game(self, board, winner=0):
+        if winner != 0:
+            self.highlight_win(board, self.winning_cells(board, winner))
+        pygame.time.delay(1500)
+        if winner == 0:
+            print("Game over. Draw")
+            self.win_announcment(self.screen, 0)
         else:
-            self.win_announcment(self.screen, 0, subtitle)
-
+            print("Game over. Player", winner, "wins")
+            if winner == self.Hplayer:
+                image = self.pick_image("win")
+            else:
+                image = self.pick_image("lost")
+            self.win_announcment(self.screen, winner, "", image)
+    
     def ai_move(self, board, ai_piece):
         
         human_piece = 3 - ai_piece
@@ -249,7 +279,9 @@ class GIU_GAME:
         pygame.display.update()
         pygame.event.clear(pygame.MOUSEBUTTONDOWN)   #while ai is thinking, han ignore ay clicks
 
-        if self.board_is_full(board):
+        if self.winning(board, row, col):
+            self.end_game(board, ai_piece)
+        elif self.board_is_full(board):
             self.end_game(board)
 
     def get_data(self):
@@ -430,7 +462,10 @@ class GIU_GAME:
                             self.drop_piece(board,row,select,1)
                             self.draw_board(board)
                             pygame.display.update()
-                            if self.board_is_full(board):   #game bykhlas lama el board btkon FULL
+                            if self.winning(board,row,select):
+                                game_over = True
+                                self.end_game(board, 1)
+                            elif self.board_is_full(board):   #game bykhlas lama el board btkon FULL
                                 game_over = True
                                 self.end_game(board)
                             turn+=1 #le8ayet ba2a ma el ai yed5ol fl howar 
@@ -448,7 +483,10 @@ class GIU_GAME:
                             self.drop_piece(board,row,select,2)
                             self.draw_board(board)
                             pygame.display.update()
-                            if self.board_is_full(board):   
+                            if self.winning(board,row,select):
+                                game_over = True
+                                self.end_game(board, 2)
+                            elif self.board_is_full(board):   
                                 game_over = True
                                 self.end_game(board)
                             turn+=1 #le8ayet ba2a ma el ai yed5ol fl howar 
